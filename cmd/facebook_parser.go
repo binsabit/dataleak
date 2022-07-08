@@ -19,12 +19,8 @@ func (app *application) ParseFacebook(w http.ResponseWriter, r *http.Request) {
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
-	i := 0
 	for scanner.Scan() {
-		if i > 10 {
-			break
-		}
-		i++
+	
 		userStr := strings.Split(scanner.Text(), ":")
 		fmt.Println(userStr)
 

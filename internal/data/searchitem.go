@@ -48,6 +48,7 @@ func (m SearchItemModel) GetInfoOf(s string) ([]FacebookParser, error) {
 		var temp FacebookParser
 		err = rows.Scan(
 			&temp.ID,
+			&temp.Email,
 			&temp.Phone,
 			&temp.FirstName,
 			&temp.LastName,
@@ -55,7 +56,7 @@ func (m SearchItemModel) GetInfoOf(s string) ([]FacebookParser, error) {
 			&temp.Location,
 			&temp.FamilyStatus,
 			&temp.Occupation,
-			&temp.Email)
+			)
 		if err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):
@@ -75,7 +76,7 @@ func (m SearchItemModel) GetInfoOf(s string) ([]FacebookParser, error) {
 }
 
 func (m SearchItemModel) Insert(f FacebookParser) error {
-	query := `INSERT INTO dataleak (phone, firstname,lastname,gender,location,familystatus,occupation,email)
+	query := `INSERT INTO dataleak (phone, firstname,lastname,gender,location,family_status,occupation,email)
 		VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
 		RETURNING id`
 	args := []interface{}{f.Phone, f.FirstName, f.LastName, f.Gender, f.Location, f.FamilyStatus, f.Occupation, f.Email}
