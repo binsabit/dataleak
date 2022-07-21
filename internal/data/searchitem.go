@@ -14,7 +14,7 @@ type SearchItem struct {
 	Type      string `json:"type"`
 }
 
-type FacebookParser struct {
+type SearchData struct {
 	ID           string `json:"record_id"`
 	Email        string `json:"email"`
 	Phone        string `json:"phone"`
@@ -24,6 +24,7 @@ type FacebookParser struct {
 	Location     string `json:"location"`
 	FamilyStatus string `json:"family_status"`
 	Occupation   string `json:"occupation"`
+	Source       string `json:"source"`
 }
 
 func ValidatePhone(v *validator.Validator, phone string) {
@@ -35,17 +36,17 @@ type SearchItemModel struct {
 	DB *sql.DB
 }
 
-func (m SearchItemModel) GetInfoOf(s string) ([]FacebookParser, error) {
-	query := `SELECT * FROM dataleak WHERE email=$1 OR phone=$1`
+func (m SearchItemModel) GetInfoOf(s string) ([]SearchData, error) {
+	query := `SELECT * FROM dataleak WHERE email LIKE $1 OR phone LIKE '%' || $1 || '%'`
 	rows, err := m.DB.Query(query, s)
 	if err != nil {
 		return nil, err
 	}
 
 	defer rows.Close()
-	var data []FacebookParser
+	var data []SearchData
 	for rows.Next() {
-		var temp FacebookParser
+		var temp SearchData
 		err = rows.Scan(
 			&temp.ID,
 			&temp.Email,
@@ -56,7 +57,8 @@ func (m SearchItemModel) GetInfoOf(s string) ([]FacebookParser, error) {
 			&temp.Location,
 			&temp.FamilyStatus,
 			&temp.Occupation,
-			)
+			&temp.Source,
+		)
 		if err != nil {
 			switch {
 			case errors.Is(err, sql.ErrNoRows):
@@ -75,11 +77,11 @@ func (m SearchItemModel) GetInfoOf(s string) ([]FacebookParser, error) {
 	return data, nil
 }
 
-func (m SearchItemModel) Insert(f FacebookParser) error {
-	query := `INSERT INTO dataleak (phone, firstname,lastname,gender,location,family_status,occupation,email)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+func (m SearchItemModel) Insert(f SearchData) error {
+	query := `INSERT INTO dataleak (phone, firstname,lastname,gender,location,family_status,occupation,email,source)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
 		RETURNING id`
-	args := []interface{}{f.Phone, f.FirstName, f.LastName, f.Gender, f.Location, f.FamilyStatus, f.Occupation, f.Email}
+	args := []interface{}{f.Phone, f.FirstName, f.LastName, f.Gender, f.Location, f.FamilyStatus, f.Occupation, f.Email, f.Source}
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 

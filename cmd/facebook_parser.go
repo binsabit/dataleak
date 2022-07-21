@@ -20,11 +20,11 @@ func (app *application) ParseFacebook(w http.ResponseWriter, r *http.Request) {
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-	
+
 		userStr := strings.Split(scanner.Text(), ":")
 		fmt.Println(userStr)
 
-		tempUser := data.FacebookParser{
+		tempUser := data.SearchData{
 			Phone:        userStr[0],
 			FirstName:    userStr[2],
 			LastName:     userStr[3],

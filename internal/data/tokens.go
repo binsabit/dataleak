@@ -55,13 +55,13 @@ type TokenModel struct {
 	DB *sql.DB
 }
 
-func (t TokenModel) New(userID int64, ttl time.Duration, scope string) (*Token, error) {
+func (m TokenModel) New(userID int64, ttl time.Duration, scope string) (*Token, error) {
 	token, err := generateToken(userID, ttl, scope)
 	if err != nil {
 		return nil, err
 	}
 
-	err = t.Insert(token)
+	err = m.Insert(token)
 	return token, err
 }
 
@@ -76,6 +76,7 @@ func (m TokenModel) Insert(token *Token) error {
 	_, err := m.DB.ExecContext(ctx, query, args...)
 	return err
 }
+
 func (m TokenModel) GetAllForUser(user *User) ([]*Token, error) {
 	query := `SELECT hash, user_id, expiry, scope
 			FROM tokens

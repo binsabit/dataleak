@@ -10,10 +10,6 @@ import (
 	"github.com/binsabit/dataleak/internal/validator"
 )
 
-func (app *application) Parse(w http.ResponseWriter, r *http.Request) {
-
-}
-
 func (app *application) SignIn(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		Email    string `json:"email"`
@@ -131,46 +127,4 @@ func (app *application) Logout(w http.ResponseWriter, r *http.Request) {
 	}
 	app.writeJSON(w, http.StatusOK, envelope{"message": "user logged out"}, nil)
 
-}
-
-func (app *application) SearchForData(w http.ResponseWriter, r *http.Request) {
-	user := app.contextGetUser(r)
-
-	if user.IsAnonymous() {
-		app.authenticationRequiredResponse(w, r)
-		return
-	}
-	// fmt.Println("Here")
-	var input struct {
-		PlainText string `json:"search_item"`
-	}
-	err := app.readJSON(w, r, &input)
-	if err != nil {
-		app.badRequestResponse(w, r, err)
-		return
-	}
-	e := validator.New()
-	p := validator.New()
-	fmt.Println(input.PlainText)
-
-	var d []data.FacebookParser
-	passed := 0
-	if data.ValidateEmail(e, input.PlainText); e.Valid() {
-
-		passed++
-	}
-	if data.ValidatePhone(p, input.PlainText); p.Valid() {
-		passed++
-	}
-	d, err = app.models.Search.GetInfoOf(input.PlainText)
-	if err != nil {
-		switch {
-		case errors.Is(err, data.ErrRecordNotFound):
-			app.notFoundResponse(w, r)
-			return
-		default:
-			app.serverErrorResponse(w, r, err)
-		}
-	}
-	app.writeJSON(w, http.StatusOK, envelope{"data": envelope{"arr": d}}, nil)
 }
