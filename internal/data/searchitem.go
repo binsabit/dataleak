@@ -27,6 +27,9 @@ type SearchData struct {
 	Source       string `json:"source"`
 }
 
+func (s SearchData) IsEmpty() bool {
+	return s == SearchData{}
+}
 func ValidatePhone(v *validator.Validator, phone string) {
 	v.Check(phone != "", "phone", "must be provided")
 	v.Check(validator.Matches(phone, validator.PhoneRX), "phone", "must be phone number")
@@ -36,8 +39,49 @@ type SearchItemModel struct {
 	DB *sql.DB
 }
 
+func (m SearchItemModel) GetInfoByEmail(email string) ([]SearchData, error) {
+	query := `SELECT * FROM dataleak WHERE email=$1`
+	rows, err := m.DB.Query(query, email)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+	var data []SearchData
+	for rows.Next() {
+		var temp SearchData
+		err = rows.Scan(
+			&temp.ID,
+			&temp.Email,
+			&temp.Phone,
+			&temp.FirstName,
+			&temp.LastName,
+			&temp.Gender,
+			&temp.Location,
+			&temp.FamilyStatus,
+			&temp.Occupation,
+			&temp.Source,
+		)
+		if err != nil {
+			switch {
+			case errors.Is(err, sql.ErrNoRows):
+				return nil, ErrRecordNotFound
+			default:
+				return nil, err
+			}
+		}
+		data = append(data, temp)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
 func (m SearchItemModel) GetInfoOf(s string) ([]SearchData, error) {
-	query := `SELECT * FROM dataleak WHERE email LIKE $1 OR phone LIKE '%' || $1 || '%'`
+	query := `SELECT * FROM dataleak WHERE email=$1 OR phone LIKE '%' || $1 || '%'`
 	rows, err := m.DB.Query(query, s)
 	if err != nil {
 		return nil, err
